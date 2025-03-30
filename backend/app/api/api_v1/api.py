@@ -1,14 +1,15 @@
 from fastapi import APIRouter
 
-from app.api.api_v1.endpoints import auth, fields
+from app.api.api_v1.endpoints import auth, fields, crops, planting_plans
 # 未実装のモジュールは一時的にコメントアウト
-# from app.api.api_v1.endpoints import crops, tasks, resources, chat
+# from app.api.api_v1.endpoints import tasks, resources, chat
 
 api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth", tags=["認証"])
 api_router.include_router(fields.router, prefix="/fields", tags=["圃場"])
+api_router.include_router(crops.router, prefix="/crops", tags=["作物"])
+api_router.include_router(planting_plans.router, prefix="/planting_plans", tags=["作付け計画"])
 # 未実装のルーターは一時的にコメントアウト
-# api_router.include_router(crops.router, prefix="/crops", tags=["作物"])
 # api_router.include_router(tasks.router, prefix="/tasks", tags=["作業"])
 # api_router.include_router(resources.router, prefix="/resources", tags=["資材・農機"])
 # api_router.include_router(chat.router, prefix="/chat", tags=["AIチャット"])
