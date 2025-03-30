@@ -10,6 +10,7 @@ class FieldBase(BaseModel):
     name: str
     soil_type: Optional[str] = None
     notes: Optional[str] = None
+    tags: Optional[List[str]] = None  # タグのリスト
 
 class FieldCreate(FieldBase):
     coordinates: List[GeoCoordinate]  # GeoJSON形式のポリゴン座標
@@ -23,6 +24,7 @@ class FieldUpdate(BaseModel):
     soil_type: Optional[str] = None
     crop_type: Optional[str] = None
     notes: Optional[str] = None
+    tags: Optional[List[str]] = None  # タグのリスト
 
 class FieldInDBBase(FieldBase):
     id: int

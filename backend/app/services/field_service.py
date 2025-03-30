@@ -27,6 +27,11 @@ class FieldService:
             # coordinatesをJSON文字列からリストに変換
             coordinates_list = json.loads(item["coordinates"])
             item["coordinates"] = coordinates_list
+            
+            # tagsをJSON文字列からリストに変換（存在する場合）
+            if item.get("tags") and isinstance(item["tags"], str):
+                item["tags"] = json.loads(item["tags"])
+                
             fields.append(Field(**item))
         
         return fields
@@ -46,6 +51,10 @@ class FieldService:
         # coordinatesをJSON文字列からリストに変換
         coordinates_list = json.loads(item["coordinates"])
         item["coordinates"] = coordinates_list
+        
+        # tagsをJSON文字列からリストに変換（存在する場合）
+        if item.get("tags") and isinstance(item["tags"], str):
+            item["tags"] = json.loads(item["tags"])
         
         return Field(**item)
 
@@ -73,6 +82,10 @@ class FieldService:
             "updated_at": now.isoformat()
         }
         
+        # tagsが存在する場合、JSON文字列に変換して追加
+        if field_in.tags:
+            field_data["tags"] = json.dumps(field_in.tags)
+        
         response = self.supabase.table(self.table).insert(field_data).execute()
         
         if not response.data:
@@ -81,6 +94,10 @@ class FieldService:
         created_field = response.data[0]
         # coordinatesをJSON文字列からリストに変換
         created_field["coordinates"] = field_in.coordinates
+        
+        # tagsをセット（存在する場合）
+        if field_in.tags:
+            created_field["tags"] = field_in.tags
         
         return Field(**created_field)
 
@@ -112,6 +129,10 @@ class FieldService:
         if field_in.notes is not None:
             update_data["notes"] = field_in.notes
         
+        if field_in.tags is not None:
+            # tagsをJSON文字列に変換
+            update_data["tags"] = json.dumps(field_in.tags)
+        
         response = self.supabase.table(self.table).update(
             update_data
         ).eq("id", field_id).execute()
@@ -123,6 +144,10 @@ class FieldService:
         # coordinatesをJSON文字列からリストに変換
         coordinates_list = json.loads(updated_field["coordinates"])
         updated_field["coordinates"] = coordinates_list
+        
+        # tagsをJSON文字列からリストに変換（存在する場合）
+        if updated_field.get("tags") and isinstance(updated_field["tags"], str):
+            updated_field["tags"] = json.loads(updated_field["tags"])
         
         return Field(**updated_field)
 

@@ -7,7 +7,10 @@ import {
   Paper, 
   Grid,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Chip,
+  Stack,
+  Divider
 } from '@mui/material';
 import Layout from '@/components/layout/Layout';
 import { useRouter } from 'next/router';
@@ -54,6 +57,8 @@ const NewFieldPage = () => {
   const [polygon, setPolygon] = useState(null);
   const [address, setAddress] = useState('');
   const [mapLoadError, setMapLoadError] = useState(null);
+  const [tags, setTags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState('');
   
   const router = useRouter();
   const { isAuthenticated } = useAuth();
@@ -185,6 +190,28 @@ const NewFieldPage = () => {
     });
   };
 
+  // タグ追加処理
+  const handleAddTag = () => {
+    if (!newTag.trim()) return;
+    if (!tags.includes(newTag.trim())) {
+      setTags([...tags, newTag.trim()]);
+    }
+    setNewTag('');
+  };
+
+  // タグ削除処理
+  const handleDeleteTag = (tagToDelete) => {
+    setTags(tags.filter(tag => tag !== tagToDelete));
+  };
+
+  // Enterキーでタグを追加
+  const handleTagKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddTag();
+    }
+  };
+
   // フォーム送信処理
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -210,7 +237,8 @@ const NewFieldPage = () => {
           coordinates,
           area,
           notes: notes || null,
-          address: address || null
+          address: address || null,
+          tags: tags.length > 0 ? tags : null
         },
         {
           headers: {
@@ -367,6 +395,52 @@ const NewFieldPage = () => {
                 {area.toFixed(2)} ha
               </Typography>
             </Box>
+
+            <Box sx={{ mt: 3, mb: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                タグ設定
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                圃場をエリアやグループで分類するためのタグを設定できます。複数のタグを追加できます。
+              </Typography>
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <TextField
+                  fullWidth
+                  id="tag"
+                  label="タグ名"
+                  name="tag"
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyDown={handleTagKeyDown}
+                  placeholder="例: 北エリア、水田、有機栽培など"
+                  sx={{ mr: 1 }}
+                />
+                <Button 
+                  onClick={handleAddTag}
+                  disabled={!newTag.trim()}
+                  variant="outlined"
+                >
+                  追加
+                </Button>
+              </Box>
+              
+              {tags.length > 0 && (
+                <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+                  {tags.map((tag, index) => (
+                    <Chip
+                      key={index}
+                      label={tag}
+                      onDelete={() => handleDeleteTag(tag)}
+                      color="primary"
+                      variant="outlined"
+                    />
+                  ))}
+                </Stack>
+              )}
+            </Box>
+            
+            <Divider sx={{ my: 2 }} />
             
             <TextField
               margin="normal"
