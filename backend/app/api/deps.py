@@ -9,7 +9,9 @@ from app.core.config import settings
 from app.models.user import User
 from app.schemas.token import TokenPayload
 from app.services.field_service import FieldService
+from app.services.crop_service import CropService
 from app.services.user_service import UserService
+from app.services.planting_plan_service import PlantingPlanService
 from app.db.session import get_db
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
@@ -46,3 +48,15 @@ def get_field_service() -> FieldService:
     圃場サービスを取得するための依存関係
     """
     return FieldService()
+
+def get_crop_service() -> CropService:
+    """
+    作物マスターサービスを取得するための依存関係
+    """
+    return CropService()
+
+def get_planting_plan_service() -> PlantingPlanService:
+    """
+    作付け計画サービスを取得するための依存関係
+    """
+    return PlantingPlanService()
