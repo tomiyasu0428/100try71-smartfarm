@@ -3,6 +3,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.schemas.crop import CropCreate, CropUpdate, CropResponse
 from app.services.crop_service import CropService
 from app.api.deps import get_current_user, get_crop_service
+from app.exceptions.service_exceptions import (
+    DatabaseOperationException,
+    ResourceNotFoundException,
+    ValidationException
+)
 
 router = APIRouter()
 
@@ -17,7 +22,13 @@ async def get_crops(
     """
     組織に属する全ての作物を取得します。
     """
-    return await crop_service.get_crops(organization_id=current_user.organization_id, skip=skip, limit=limit)
+    try:
+        return await crop_service.get_crops(organization_id=current_user.organization_id, skip=skip, limit=limit)
+    except DatabaseOperationException as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"{e.message}"
+        )
 
 
 @router.post("/", response_model=CropResponse, status_code=status.HTTP_201_CREATED)
@@ -29,7 +40,18 @@ async def create_crop(
     """
     新しい作物を作成します。
     """
-    return await crop_service.create_crop(crop_in=crop_in, organization_id=current_user.organization_id)
+    try:
+        return await crop_service.create_crop(crop_in=crop_in, organization_id=current_user.organization_id)
+    except ValidationException as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{e.message}"
+        )
+    except DatabaseOperationException as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"{e.message}"
+        )
 
 
 @router.get("/{crop_id}", response_model=CropResponse)
@@ -41,10 +63,21 @@ async def get_crop(
     """
     特定の作物の詳細を取得します。
     """
-    crop = await crop_service.get_crop(crop_id=crop_id)
-    if not crop or crop.organization_id != current_user.organization_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="作物が見つかりません")
-    return crop
+    try:
+        crop = await crop_service.get_crop(crop_id=crop_id)
+        if not crop or crop.organization_id != current_user.organization_id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="作物が見つかりません")
+        return crop
+    except ResourceNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"{e.message}"
+        )
+    except DatabaseOperationException as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"{e.message}"
+        )
 
 
 @router.put("/{crop_id}", response_model=CropResponse)
@@ -57,11 +90,27 @@ async def update_crop(
     """
     作物情報を更新します。
     """
-    crop = await crop_service.get_crop(crop_id=crop_id)
-    if not crop or crop.organization_id != current_user.organization_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="作物が見つかりません")
+    try:
+        crop = await crop_service.get_crop(crop_id=crop_id)
+        if not crop or crop.organization_id != current_user.organization_id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="作物が見つかりません")
 
-    return await crop_service.update_crop(crop_id=crop_id, crop_in=crop_in)
+        return await crop_service.update_crop(crop_id=crop_id, crop_in=crop_in)
+    except ValidationException as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{e.message}"
+        )
+    except ResourceNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"{e.message}"
+        )
+    except DatabaseOperationException as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"{e.message}"
+        )
 
 
 @router.delete("/{crop_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -73,12 +122,19 @@ async def delete_crop(
     """
     作物を削除します。
     """
-    crop = await crop_service.get_crop(crop_id=crop_id)
-    if not crop or crop.organization_id != current_user.organization_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="作物が見つかりません")
+    try:
+        crop = await crop_service.get_crop(crop_id=crop_id)
+        if not crop or crop.organization_id != current_user.organization_id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="作物が見つかりません")
 
-    success = await crop_service.delete_crop(crop_id=crop_id)
-    if not success:
+        await crop_service.delete_crop(crop_id=crop_id)
+    except ResourceNotFoundException as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="作物の削除に失敗しました"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"{e.message}"
+        )
+    except DatabaseOperationException as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"{e.message}"
         )
