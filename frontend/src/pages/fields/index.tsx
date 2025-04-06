@@ -48,12 +48,7 @@ const FieldsPage = () => {
 
     const fetchFields = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/fields`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const response = await axios.get(`http://localhost:8080/api/v1/fields/`);
         setFields(response.data);
       } catch (err: any) {
         setError(err.response?.data?.detail || '圃場データの取得に失敗しました');
@@ -70,12 +65,7 @@ const FieldsPage = () => {
   const handleDelete = async (id: number) => {
     if (window.confirm('この圃場を削除してもよろしいですか？')) {
       try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/fields/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        await axios.delete(`http://localhost:8080/api/v1/fields/${id}`);
         // 削除後にリストを更新
         setFields(fields.filter(field => field.id !== id));
       } catch (err: any) {

@@ -58,7 +58,7 @@ class FieldService:
         return Field(**item)
 
     async def create_field(
-        self, field_in: FieldCreate, user_id: str, organization_id: int
+        self, field_in: FieldCreate, user_id: int, organization_id: int
     ) -> Field:
         """
         新しい圃場を作成します

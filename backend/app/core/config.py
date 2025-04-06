@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "SmartFarm Agent"
     
     # CORS設定
-    CORS_ORIGINS: List[AnyHttpUrl] = []
+    CORS_ORIGINS: List[Union[AnyHttpUrl, str]] = ["http://localhost:3000"]
 
     @validator("CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
