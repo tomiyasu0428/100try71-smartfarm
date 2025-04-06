@@ -48,7 +48,7 @@ const FieldsPage = () => {
 
     const fetchFields = async () => {
       try {
-        const response = await axios.get(`http://localhost:8080/api/v1/fields`);
+        const response = await axios.get(`http://localhost:8080/api/v1/fields/`);
         setFields(response.data);
       } catch (err: any) {
         setError(err.response?.data?.detail || '圃場データの取得に失敗しました');
