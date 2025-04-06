@@ -29,7 +29,7 @@ class FieldUpdate(BaseModel):
 class FieldInDBBase(FieldBase):
     id: int
     organization_id: int
-    user_id: str
+    user_id: Optional[int] = None
     coordinates: List[GeoCoordinate]
     area: float
     crop_type: Optional[str] = None
