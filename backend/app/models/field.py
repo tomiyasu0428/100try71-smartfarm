@@ -6,7 +6,7 @@ from pydantic import BaseModel
 class Field(BaseModel):
     id: int
     organization_id: int
-    user_id: Optional[str] = None
+    user_id: Optional[int] = None
     name: str
     coordinates: Any  # GeoJSON形式のポリゴン座標
     area: float  # ヘクタール単位の面積
