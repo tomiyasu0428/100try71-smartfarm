@@ -12,6 +12,9 @@ from app.services.field_service import FieldService
 from app.services.crop_service import CropService
 from app.services.user_service import UserService
 from app.services.planting_plan_service import PlantingPlanService
+from app.services.task_service import TaskService
+from app.services.resource_service import ResourceService
+from app.services.chat_service import ChatService
 from app.db.session import get_db
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
@@ -60,3 +63,21 @@ def get_planting_plan_service() -> PlantingPlanService:
     作付け計画サービスを取得するための依存関係
     """
     return PlantingPlanService()
+
+def get_task_service() -> TaskService:
+    """
+    作業サービスを取得するための依存関係
+    """
+    return TaskService()
+
+def get_resource_service() -> ResourceService:
+    """
+    資材・農機サービスを取得するための依存関係
+    """
+    return ResourceService()
+
+def get_chat_service() -> ChatService:
+    """
+    AIチャットサービスを取得するための依存関係
+    """
+    return ChatService()
