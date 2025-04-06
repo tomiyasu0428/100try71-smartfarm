@@ -12,15 +12,19 @@ import {
   MenuItem,
   SelectChangeEvent
 } from '@mui/material';
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import jaLocale from '@fullcalendar/core/locales/ja';
+import dynamic from 'next/dynamic';
 import axios from 'axios';
 import { useRouter } from 'next/router';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
+
+const FullCalendar = dynamic(() => import('@fullcalendar/react'), {
+  ssr: false,
+});
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import jaLocale from '@fullcalendar/core/locales/ja';
 
 interface CalendarEvent {
   id: string;
