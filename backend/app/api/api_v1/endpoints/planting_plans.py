@@ -10,6 +10,12 @@ from app.schemas.planting_plan import (
     PlantingPlanResponse,
     WorkflowInstanceUpdate
 )
+from app.exceptions.service_exceptions import (
+    DatabaseOperationException,
+    ResourceNotFoundException,
+    ValidationException,
+    WorkflowException
+)
 
 
 router = APIRouter()
@@ -41,10 +47,26 @@ async def create_planting_plan(
     """
     新しい作付け計画を作成します。
     """
-    return await planting_plan_service.create_planting_plan(
-        plan_in=plan_in,
-        organization_id=current_user.organization_id
-    )
+    try:
+        return await planting_plan_service.create_planting_plan(
+            plan_in=plan_in,
+            organization_id=current_user.organization_id
+        )
+    except ValidationException as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{e.message}"
+        )
+    except ResourceNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"{e.message}"
+        )
+    except DatabaseOperationException as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"{e.message}"
+        )
 
 
 @router.get("/{plan_id}", response_model=PlantingPlanResponse)
@@ -56,10 +78,21 @@ async def get_planting_plan(
     """
     特定の作付け計画の詳細を取得します。
     """
-    plan = await planting_plan_service.get_planting_plan(plan_id=plan_id)
-    if not plan or plan.organization_id != current_user.organization_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="作付け計画が見つかりません")
-    return plan
+    try:
+        plan = await planting_plan_service.get_planting_plan(plan_id=plan_id)
+        if not plan or plan.organization_id != current_user.organization_id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="作付け計画が見つかりません")
+        return plan
+    except ResourceNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"{e.message}"
+        )
+    except DatabaseOperationException as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"{e.message}"
+        )
 
 
 @router.put("/{plan_id}", response_model=PlantingPlanResponse)
@@ -72,11 +105,27 @@ async def update_planting_plan(
     """
     作付け計画情報を更新します。
     """
-    plan = await planting_plan_service.get_planting_plan(plan_id=plan_id)
-    if not plan or plan.organization_id != current_user.organization_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="作付け計画が見つかりません")
+    try:
+        plan = await planting_plan_service.get_planting_plan(plan_id=plan_id)
+        if not plan or plan.organization_id != current_user.organization_id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="作付け計画が見つかりません")
 
-    return await planting_plan_service.update_planting_plan(plan_id=plan_id, plan_in=plan_in)
+        return await planting_plan_service.update_planting_plan(plan_id=plan_id, plan_in=plan_in)
+    except ValidationException as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{e.message}"
+        )
+    except ResourceNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"{e.message}"
+        )
+    except DatabaseOperationException as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"{e.message}"
+        )
 
 
 @router.delete("/{plan_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -88,14 +137,21 @@ async def delete_planting_plan(
     """
     作付け計画を削除します。
     """
-    plan = await planting_plan_service.get_planting_plan(plan_id=plan_id)
-    if not plan or plan.organization_id != current_user.organization_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="作付け計画が見つかりません")
+    try:
+        plan = await planting_plan_service.get_planting_plan(plan_id=plan_id)
+        if not plan or plan.organization_id != current_user.organization_id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="作付け計画が見つかりません")
 
-    success = await planting_plan_service.delete_planting_plan(plan_id=plan_id)
-    if not success:
+        await planting_plan_service.delete_planting_plan(plan_id=plan_id)
+    except ResourceNotFoundException as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="作付け計画の削除に失敗しました"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"{e.message}"
+        )
+    except DatabaseOperationException as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"{e.message}"
         )
 
 
@@ -111,7 +167,28 @@ async def update_workflow_instance(
     """
     # TODO: 権限チェック（この作業インスタンスが現在のユーザーの組織に属しているか）
     
-    return await planting_plan_service.update_workflow_instance(
-        instance_id=instance_id,
-        instance_data=instance_in.dict(exclude_unset=True)
-    )
+    try:
+        return await planting_plan_service.update_workflow_instance(
+            instance_id=instance_id,
+            instance_data=instance_in.dict(exclude_unset=True)
+        )
+    except ValidationException as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{e.message}"
+        )
+    except ResourceNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"{e.message}"
+        )
+    except WorkflowException as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{e.message}"
+        )
+    except DatabaseOperationException as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"{e.message}"
+        )
