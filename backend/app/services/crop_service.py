@@ -1,10 +1,11 @@
 import json
-from typing import List, Optional
+from typing import List, Optional, Any, Dict, cast
 from datetime import datetime
 
 from app.db.session import get_supabase_client
 from app.models.crop import Crop, WorkflowStep
 from app.schemas.crop import CropCreate, CropUpdate
+from app.utils.json_utils import parse_json_string, to_json_string
 
 
 class CropService:
@@ -26,14 +27,15 @@ class CropService:
         for item in response.data:
             # workflowをJSON文字列からリストに変換（存在する場合）
             if item.get("workflow") and isinstance(item["workflow"], str):
-                workflow_data = json.loads(item["workflow"])
-                item["workflow"] = self._convert_workflow_data_to_steps(workflow_data)
+                workflow_data = parse_json_string(item["workflow"])
+                if workflow_data:
+                    item["workflow"] = self._convert_workflow_data_to_steps(workflow_data)
                 
             crops.append(Crop(**item))
         
         return crops
 
-    async def get_crop(self, crop_id: int) -> Optional[Crop]:
+    async def get_crop(self, crop_id: Optional[int]) -> Optional[Crop]:
         """
         特定のIDの作物を取得します
         """
@@ -47,8 +49,9 @@ class CropService:
         item = response.data[0]
         # workflowをJSON文字列からリストに変換（存在する場合）
         if item.get("workflow") and isinstance(item["workflow"], str):
-            workflow_data = json.loads(item["workflow"])
-            item["workflow"] = self._convert_workflow_data_to_steps(workflow_data)
+            workflow_data = parse_json_string(item["workflow"])
+            if workflow_data:
+                item["workflow"] = self._convert_workflow_data_to_steps(workflow_data)
         
         return Crop(**item)
 
@@ -71,8 +74,8 @@ class CropService:
         
         # workflowが存在する場合、JSON文字列に変換して追加
         if crop_in.workflow:
-            workflow_data = self._convert_workflow_steps_to_data(crop_in.workflow)
-            crop_data["workflow"] = json.dumps(workflow_data)
+            workflow_data = self._convert_workflow_steps_to_data(cast(List[Any], crop_in.workflow))
+            crop_data["workflow"] = to_json_string(workflow_data)
         
         response = self.supabase.table(self.table).insert(crop_data).execute()
         
@@ -104,8 +107,8 @@ class CropService:
         
         if crop_in.workflow is not None:
             # workflowをJSON文字列に変換
-            workflow_data = self._convert_workflow_steps_to_data(crop_in.workflow)
-            update_data["workflow"] = json.dumps(workflow_data)
+            workflow_data = self._convert_workflow_steps_to_data(cast(List[Any], crop_in.workflow))
+            update_data["workflow"] = to_json_string(workflow_data)
         
         if crop_in.notes is not None:
             update_data["notes"] = crop_in.notes
@@ -121,8 +124,9 @@ class CropService:
         
         # workflowをJSON文字列からリストに変換（存在する場合）
         if updated_crop.get("workflow") and isinstance(updated_crop["workflow"], str):
-            workflow_data = json.loads(updated_crop["workflow"])
-            updated_crop["workflow"] = self._convert_workflow_data_to_steps(workflow_data)
+            workflow_data = parse_json_string(updated_crop["workflow"])
+            if workflow_data:
+                updated_crop["workflow"] = self._convert_workflow_data_to_steps(workflow_data)
         
         return Crop(**updated_crop)
 
@@ -164,7 +168,7 @@ class CropService:
             
         return steps
     
-    def _convert_workflow_steps_to_data(self, workflow_steps: List[WorkflowStep]) -> List[dict]:
+    def _convert_workflow_steps_to_data(self, workflow_steps: List[Any]) -> List[Dict[str, Any]]:
         """
         WorkflowStepオブジェクトのリストをJSONデータに変換します
         子フローも再帰的に処理します
@@ -175,7 +179,7 @@ class CropService:
             
             # 子フローがある場合は再帰的に処理
             if step.sub_steps:
-                step_data["sub_steps"] = self._convert_workflow_steps_to_data(step.sub_steps)
+                step_data["sub_steps"] = self._convert_workflow_steps_to_data(cast(List[Any], step.sub_steps))
             elif "sub_steps" in step_data and not step_data["sub_steps"]:
                 # 空のリストの場合は削除（JSONを小さくするため）
                 del step_data["sub_steps"]

@@ -1,20 +1,22 @@
 import json
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, cast
 from datetime import datetime, date, timedelta
 
 from app.db.session import get_supabase_client
 from app.models.planting_plan import PlantingPlan, PlantingPlanField, WorkflowInstance
 from app.schemas.planting_plan import PlantingPlanCreate, PlantingPlanUpdate
 from app.services.crop_service import CropService
+from app.utils.date_utils import convert_iso_to_date
+from app.utils.json_utils import parse_json_string, to_json_string
 
 
 class PlantingPlanService:
-    def __init__(self):
+    def __init__(self, crop_service: Optional[CropService] = None):
         self.supabase = get_supabase_client()
         self.plan_table = "planting_plans"
         self.field_table = "planting_plan_fields"
         self.workflow_table = "workflow_instances"
-        self.crop_service = CropService()
+        self.crop_service = crop_service or CropService()
 
     async def get_planting_plans(
         self, organization_id: int, skip: int = 0, limit: int = 100
@@ -46,13 +48,9 @@ class PlantingPlanService:
             for instance_data in workflow_response.data:
                 # 日付型に変換
                 if instance_data.get("planned_date"):
-                    instance_data["planned_date"] = datetime.fromisoformat(
-                        instance_data["planned_date"].replace("Z", "+00:00")
-                    ).date()
+                    instance_data["planned_date"] = convert_iso_to_date(instance_data["planned_date"])
                 if instance_data.get("actual_date"):
-                    instance_data["actual_date"] = datetime.fromisoformat(
-                        instance_data["actual_date"].replace("Z", "+00:00")
-                    ).date()
+                    instance_data["actual_date"] = convert_iso_to_date(instance_data["actual_date"])
                 
                 plan.workflow_instances.append(WorkflowInstance(**instance_data))
             
@@ -60,7 +58,7 @@ class PlantingPlanService:
         
         return plans
 
-    async def get_planting_plan(self, plan_id: int) -> Optional[PlantingPlan]:
+    async def get_planting_plan(self, plan_id: Optional[int]) -> Optional[PlantingPlan]:
         """
         特定のIDの作付け計画を取得します
         """
@@ -90,13 +88,9 @@ class PlantingPlanService:
         for instance_data in workflow_response.data:
             # 日付型に変換
             if instance_data.get("planned_date"):
-                instance_data["planned_date"] = datetime.fromisoformat(
-                    instance_data["planned_date"].replace("Z", "+00:00")
-                ).date()
+                instance_data["planned_date"] = convert_iso_to_date(instance_data["planned_date"])
             if instance_data.get("actual_date"):
-                instance_data["actual_date"] = datetime.fromisoformat(
-                    instance_data["actual_date"].replace("Z", "+00:00")
-                ).date()
+                instance_data["actual_date"] = convert_iso_to_date(instance_data["actual_date"])
             
             plan.workflow_instances.append(WorkflowInstance(**instance_data))
         
@@ -182,7 +176,7 @@ class PlantingPlanService:
             update_data["plan_name"] = plan_in.plan_name
         
         if plan_in.crop_id is not None:
-            update_data["crop_id"] = plan_in.crop_id
+            update_data["crop_id"] = str(plan_in.crop_id)
         
         if plan_in.season is not None:
             update_data["season"] = plan_in.season
@@ -258,18 +252,14 @@ class PlantingPlanService:
         
         # 日付型に変換
         if instance_data.get("planned_date"):
-            instance_data["planned_date"] = datetime.fromisoformat(
-                instance_data["planned_date"].replace("Z", "+00:00")
-            ).date()
+            instance_data["planned_date"] = convert_iso_to_date(instance_data["planned_date"])
         if instance_data.get("actual_date"):
-            instance_data["actual_date"] = datetime.fromisoformat(
-                instance_data["actual_date"].replace("Z", "+00:00")
-            ).date()
+            instance_data["actual_date"] = convert_iso_to_date(instance_data["actual_date"])
         
         return WorkflowInstance(**instance_data)
 
     async def _create_workflow_instances(
-        self, plan_id: int, instances: List[Any]
+        self, plan_id: Optional[int], instances: List[Any]
     ) -> List[WorkflowInstance]:
         """
         作業インスタンスを作成します
@@ -303,16 +293,14 @@ class PlantingPlanService:
                 
                 # 日付型に変換
                 if instance_data.get("planned_date"):
-                    instance_data["planned_date"] = datetime.fromisoformat(
-                        instance_data["planned_date"].replace("Z", "+00:00")
-                    ).date()
+                    instance_data["planned_date"] = convert_iso_to_date(instance_data["planned_date"])
                 
                 created_instances.append(WorkflowInstance(**instance_data))
         
         return created_instances
 
     async def _generate_workflow_instances_from_crop(
-        self, plan_id: int, crop_id: int, planting_date: Optional[date]
+        self, plan_id: Optional[int], crop_id: Optional[int], planting_date: Optional[date]
     ) -> List[WorkflowInstance]:
         """
         作物マスターの作業フローから作業インスタンスを生成します
@@ -357,9 +345,7 @@ class PlantingPlanService:
             
             # 日付型に変換
             if parent_instance.get("planned_date"):
-                parent_instance["planned_date"] = datetime.fromisoformat(
-                    parent_instance["planned_date"].replace("Z", "+00:00")
-                ).date()
+                parent_instance["planned_date"] = convert_iso_to_date(parent_instance["planned_date"])
             
             created_instances.append(WorkflowInstance(**parent_instance))
             
@@ -389,9 +375,7 @@ class PlantingPlanService:
                         
                         # 日付型に変換
                         if sub_instance.get("planned_date"):
-                            sub_instance["planned_date"] = datetime.fromisoformat(
-                                sub_instance["planned_date"].replace("Z", "+00:00")
-                            ).date()
+                            sub_instance["planned_date"] = convert_iso_to_date(sub_instance["planned_date"])
                         
                         created_instances.append(WorkflowInstance(**sub_instance))
         
