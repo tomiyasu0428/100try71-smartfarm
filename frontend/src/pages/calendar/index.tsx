@@ -17,14 +17,21 @@ import axios from 'axios';
 import { useRouter } from 'next/router';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
+import Head from 'next/head';
 
-const FullCalendar = dynamic(() => import('@fullcalendar/react'), {
-  ssr: false,
-});
+const FullCalendar = dynamic(() => 
+  import('@fullcalendar/react').then((mod) => mod.default), 
+  { ssr: false }
+);
+
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import jaLocale from '@fullcalendar/core/locales/ja';
+
+import '@fullcalendar/common/main.css';
+import '@fullcalendar/daygrid/main.css';
+import '@fullcalendar/timegrid/main.css';
 
 interface CalendarEvent {
   id: string;
@@ -150,6 +157,9 @@ export default function CalendarPage() {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Head>
+        <title>作業カレンダー | SmartFarm</title>
+      </Head>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" component="h1" gutterBottom>
           作業カレンダー
@@ -179,26 +189,28 @@ export default function CalendarPage() {
         </Box>
       ) : (
         <Paper sx={{ p: 2 }}>
-          <FullCalendar
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            initialView="dayGridMonth"
-            headerToolbar={{
-              left: 'prev,next today',
-              center: 'title',
-              right: 'dayGridMonth,timeGridWeek'
-            }}
-            locale={jaLocale}
-            events={getFilteredEvents()}
-            eventClick={handleEventClick}
-            dateClick={handleDateClick}
-            height="auto"
-            eventTimeFormat={{
-              hour: '2-digit',
-              minute: '2-digit',
-              meridiem: false,
-              hour12: false
-            }}
-          />
+          {typeof window !== 'undefined' && (
+            <FullCalendar
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+              initialView="dayGridMonth"
+              headerToolbar={{
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek'
+              }}
+              locale={jaLocale}
+              events={getFilteredEvents()}
+              eventClick={handleEventClick}
+              dateClick={handleDateClick}
+              height="auto"
+              eventTimeFormat={{
+                hour: '2-digit',
+                minute: '2-digit',
+                meridiem: false,
+                hour12: false
+              }}
+            />
+          )}
         </Paper>
       )}
     </Container>
