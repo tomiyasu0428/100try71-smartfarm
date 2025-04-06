@@ -21,6 +21,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import MapIcon from '@mui/icons-material/Map';
 import AgricultureIcon from '@mui/icons-material/Agriculture';
 import EventNoteIcon from '@mui/icons-material/EventNote';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import ChatIcon from '@mui/icons-material/Chat';
 import BarChartIcon from '@mui/icons-material/BarChart';
@@ -59,6 +60,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
     { text: '圃場管理', icon: <MapIcon />, path: '/fields' },
     { text: '作物マスタ', icon: <AgricultureIcon />, path: '/crops' },
     { text: '作業管理', icon: <EventNoteIcon />, path: '/tasks' },
+    { text: 'カレンダー', icon: <CalendarMonthIcon />, path: '/calendar' },
     { text: '資材・農機', icon: <InventoryIcon />, path: '/resources' },
     { text: 'AIチャット', icon: <ChatIcon />, path: '/chat' },
     { text: 'レポート', icon: <BarChartIcon />, path: '/reports', divider: true },
