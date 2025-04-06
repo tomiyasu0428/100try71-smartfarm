@@ -111,6 +111,7 @@
    - イベントタイプ別の色分け表示
    - 関連詳細ページへのインタラクティブなナビゲーション
    - 日本語対応
+   - サーバーサイドレンダリング（SSR）の問題を解決
 
 ### 主な変更ファイル
 
@@ -118,6 +119,22 @@
 - `backend/app/api/api_v1/api.py` - APIルーターの更新
 - `frontend/src/pages/calendar/index.tsx` - カレンダーページコンポーネント
 - `frontend/src/components/layout/Layout.tsx` - ナビゲーションメニューの更新
+
+### 技術的な課題と解決策
+
+1. **FullCalendarのSSR問題**
+   - 問題: Next.jsのSSRでFullCalendarを使用すると `TypeError: Cannot read properties of null (reading 'cssRules')` エラーが発生
+   - 解決策: 
+     - Next.jsの `dynamic` インポートを使用し、`ssr: false` オプションを設定
+     - クライアントサイドレンダリングのチェック (`typeof window !== 'undefined'`) を追加
+     - 不要なCSSインポートを削除（FullCalendar v6ではCSSが内部で処理される）
+
+2. **APIとの連携**
+   - 問題: バックエンドAPIからイベントデータを取得する必要がある
+   - 解決策:
+     - Axiosを使用してHTTPリクエストを実装
+     - エラーハンドリングとローディング状態の管理
+     - イベントデータの適切な変換と表示
 
 ### カレンダー機能の詳細
 
