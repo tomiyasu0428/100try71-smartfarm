@@ -5,6 +5,7 @@ from datetime import datetime
 from app.db.session import get_supabase_client
 from app.models.field import Field
 from app.schemas.field import FieldCreate, FieldUpdate, GeoCoordinate
+from app.utils.json_utils import parse_json_string, to_json_string
 
 
 class FieldService:
@@ -25,12 +26,11 @@ class FieldService:
         fields = []
         for item in response.data:
             # coordinatesをJSON文字列からリストに変換
-            coordinates_list = json.loads(item["coordinates"])
-            item["coordinates"] = coordinates_list
+            item["coordinates"] = parse_json_string(item["coordinates"])
             
             # tagsをJSON文字列からリストに変換（存在する場合）
             if item.get("tags") and isinstance(item["tags"], str):
-                item["tags"] = json.loads(item["tags"])
+                item["tags"] = parse_json_string(item["tags"])
                 
             fields.append(Field(**item))
         
@@ -49,12 +49,11 @@ class FieldService:
         
         item = response.data[0]
         # coordinatesをJSON文字列からリストに変換
-        coordinates_list = json.loads(item["coordinates"])
-        item["coordinates"] = coordinates_list
+        item["coordinates"] = parse_json_string(item["coordinates"])
         
         # tagsをJSON文字列からリストに変換（存在する場合）
         if item.get("tags") and isinstance(item["tags"], str):
-            item["tags"] = json.loads(item["tags"])
+            item["tags"] = parse_json_string(item["tags"])
         
         return Field(**item)
 
@@ -67,14 +66,14 @@ class FieldService:
         now = datetime.utcnow()
         
         # coordinatesをJSON文字列に変換
-        coordinates_json = json.dumps([coord.dict() for coord in field_in.coordinates])
+        coordinates_json = to_json_string([coord.dict() for coord in field_in.coordinates])
         
         field_data = {
             "name": field_in.name,
             "organization_id": organization_id,
             "user_id": user_id,
             "coordinates": coordinates_json,
-            "area": field_in.area,
+            "area": str(field_in.area),  # 数値を文字列に変換
             "soil_type": field_in.soil_type,
             "crop_type": field_in.crop_type,
             "notes": field_in.notes,
@@ -84,7 +83,7 @@ class FieldService:
         
         # tagsが存在する場合、JSON文字列に変換して追加
         if field_in.tags:
-            field_data["tags"] = json.dumps(field_in.tags)
+            field_data["tags"] = to_json_string(field_in.tags)
         
         response = self.supabase.table(self.table).insert(field_data).execute()
         
@@ -115,10 +114,10 @@ class FieldService:
         
         if field_in.coordinates is not None:
             # coordinatesをJSON文字列に変換
-            update_data["coordinates"] = json.dumps([coord.dict() for coord in field_in.coordinates])
+            update_data["coordinates"] = to_json_string([coord.dict() for coord in field_in.coordinates])
         
         if field_in.area is not None:
-            update_data["area"] = field_in.area
+            update_data["area"] = str(field_in.area)
         
         if field_in.soil_type is not None:
             update_data["soil_type"] = field_in.soil_type
@@ -131,7 +130,7 @@ class FieldService:
         
         if field_in.tags is not None:
             # tagsをJSON文字列に変換
-            update_data["tags"] = json.dumps(field_in.tags)
+            update_data["tags"] = to_json_string(field_in.tags)
         
         response = self.supabase.table(self.table).update(
             update_data
@@ -142,12 +141,11 @@ class FieldService:
         
         updated_field = response.data[0]
         # coordinatesをJSON文字列からリストに変換
-        coordinates_list = json.loads(updated_field["coordinates"])
-        updated_field["coordinates"] = coordinates_list
+        updated_field["coordinates"] = parse_json_string(updated_field["coordinates"])
         
         # tagsをJSON文字列からリストに変換（存在する場合）
         if updated_field.get("tags") and isinstance(updated_field["tags"], str):
-            updated_field["tags"] = json.loads(updated_field["tags"])
+            updated_field["tags"] = parse_json_string(updated_field["tags"])
         
         return Field(**updated_field)
 
